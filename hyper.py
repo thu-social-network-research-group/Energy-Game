@@ -5,7 +5,7 @@ H = 4
 N = 3
 
 # Price coefficient
-g = 1
+g = 0.01
 
 # Error bound
 epsilon = 1e-4

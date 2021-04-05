@@ -69,18 +69,18 @@ class User:
         """
         return np.sum(np.multiply(self.w, (self.x_user[self.time] - self.x_sch[self.time]) ** 2))
 
-    def sum_cost_t(self, x):
+    def sum_cost_t(self, x=None):
         """
         Calculate the user's total cost of time t
         :return:
         """
-        if x[0] is None or x[1] is None:
+        if x is None:
             return self.price * (self.x_user[self.time] + self.s_user[self.time]) \
                 / (np.sum(self.x_user) + np.sum(self.s_user)) \
                 + np.sum(np.multiply(self.w, (self.x_user[self.time] - self.x_sch[self.time]) ** 2))
         else:
-            return self.price * (x[0] + x[1]) / (np.sum(self.x_user) + np.sum(self.s_user)) \
-                + np.sum(np.multiply(self.w, (x[0] - self.x_sch[self.time]) ** 2))
+            return self.price * (sum(x)) / (np.sum(self.x_user) + np.sum(self.s_user)) \
+                + np.sum(np.multiply(self.w, (x[:-1] - self.x_sch[self.time]) ** 2))
 
 
 class Electricity:
@@ -100,14 +100,14 @@ class Electricity:
         Calculate the price of the electricity
         :return: price (P(t)=g*Lt^2)
         """
-        time = self.time.__next__()
-        print('Hour:', time)
+        t = self.time.__next__()
         total = 0
         for i in range(len(self.user_list)):
-            total += np.sum(self.user_list[i].x_user[time]) + self.user_list[i].s_user[time]
-            self.user_list[i].time = time
+            total += np.sum(self.user_list[i].x_user[t]) + self.user_list[i].s_user[t]
+            self.user_list[i].time = t
             self.user_list[i].price = g * total ** 2
-        return g * total ** 2
+        print('Price:', g * total ** 2)
+        return g * total ** 2, t
 
     def reset_time(self):
         self.time = np.arange(H).__iter__()
@@ -120,17 +120,27 @@ if __name__ == "__main__":
         print('Day:', _)
         try:
             while True:
-                e.set_price_t()
+                _, time = e.set_price_t()
+                print('Hour:', time)
                 for u in range(N):
-                    res = minimize(e.user_list[u].sum_cost_t, [100, 100],
-                                   method='nelder-mead', options={'xtol': 1e-2, 'disp': True})
-                    [x_new, s_new] = res.x
                     print('User:', u)
-                    print('x_new:', x_new, 's_new:', s_new)
+                    print('Strategy_x:', e.user_list[u].x_user[time])
+                    print('Strategy_s:', e.user_list[u].s_user[time])
+                    print('Schedule_x:', e.user_list[u].x_sch[time])
+
+                    fun = e.user_list[u].sum_cost_t
+                    cons = ({'type': 'ineq', 'fun': lambda x: x[:-1] - epsilon},
+                            {'type': 'ineq', 'fun': lambda x: x[-1] - epsilon})
+
+                    res = minimize(fun, e.user_list[u].x_user[time].tolist() + [e.user_list[u].s_user[time]],
+                                   method='SLSQP', constraints=cons)
+                    x_new, s_new = res.x[:-1], res.x[-1]
+                    print('x_new:', x_new)
+                    print('s_new:', s_new)
                     e.user_list[u].change(x_new, s_new)
 
                 pass  # TODO: Optimization Algorithm
 
         except StopIteration:
             e.reset_time()
-            print('-' * 10)
+            print('=' * 50)

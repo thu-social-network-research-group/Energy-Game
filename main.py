@@ -51,7 +51,7 @@ for day in range(T):
                 )
 
                 res = minimize(fun, e.user_list[u].x_user[time].tolist() + [e.user_list[u].s_user[time]],
-                               method='SLSQP', constraints=cons, tol=1e-6, options={'disp': True})
+                               method='SLSQP', constraints=cons, tol=1e-6, options={'maxiter': 1, 'disp': True})
                 x_new, s_new = res.x[:-1], res.x[-1]
                 print('x_new:', x_new)
                 print('s_new:', s_new)

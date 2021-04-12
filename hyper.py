@@ -2,7 +2,7 @@
 H = 4
 
 # Number of users
-N = 1
+N = 3
 
 # Price coefficient
 g = 0.001

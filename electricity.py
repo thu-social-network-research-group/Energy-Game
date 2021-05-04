@@ -1,7 +1,5 @@
 import numpy as np
 
-np.random.seed(42)
-
 
 class User:
     def __init__(self, h: int, a: int, w: list = None, x_user: list = None, x_sch: list = None, s_user: list = None,
@@ -22,7 +20,7 @@ class User:
         else:
             self.w = w
         if x_user is None:
-            self.x_user = np.random.random((h, a)) * 100
+            self.x_user = np.random.random((h, a)) * 10
         else:
             self.x_user = x_user
         if x_sch is None:
@@ -38,9 +36,9 @@ class User:
             for h_ in range(h):
                 for a_ in range(self.num_appliance):
                     if self.t_sch[a_][0] <= h_ <= self.t_sch[a_][1]:
-                        self.x_sch[h_, a_] = np.random.random() * 100
+                        self.x_sch[h_, a_] = np.random.random() * 10
                     elif self.t_sch[a_][0] > self.t_sch[a_][1] and (h_ >= self.t_sch[a_][0] or h_ <= self.t_sch[a_][1]):
-                        self.x_sch[h_, a_] = np.random.random() * 100
+                        self.x_sch[h_, a_] = np.random.random() * 10
         else:
             self.t_sch = t_sch
         print(self.t_sch)
@@ -124,6 +122,10 @@ class Electricity:
             self.e_sch = e_sch
         print(self.e_sch)
 
+    def set_time(self):
+        self.t = self.time.__next__()
+        return self.t
+
     def is_not_power(self):
         return not self.t in range(np.min(self.e_sch), np.max(self.e_sch) + 1)
 
@@ -132,13 +134,12 @@ class Electricity:
         Calculate the price of the electricity
         :return: price (P(t)=g*Lt^2)
         """
-        self.t = self.time.__next__()
         total = 0
         for i in range(len(self.user_list)):
             total += np.sum(self.user_list[i].x_user[self.t]) + self.user_list[i].s_user[self.t]
             self.user_list[i].time = self.t
             self.user_list[i].price = g * total ** 2
-        return g * total ** 2, self.t
+        return g * total ** 2
 
     def reset_time(self, h):
         self.time = np.arange(h).__iter__()

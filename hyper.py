@@ -17,6 +17,6 @@ T = 2
 Vmax = 100
 
 Pmax = 100
-Pmin = 2
+Pmin = 0.1
 
-Smax = 10
+Smax = 1
